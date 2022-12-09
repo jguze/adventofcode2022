@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var (
@@ -139,7 +140,8 @@ func canSeeEdgeFromHeight(
 	return result, total
 }
 
-func calcVisibilityAndScenicForCell(grid [][]*Cell, cell *Cell) {
+func calcVisibilityAndScenicForCell(grid [][]*Cell, cell *Cell, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for _, dir := range directions {
 		result, total := canSeeEdgeFromHeight(cell.value, cell, dir, grid, 0)
 		if result {
@@ -178,11 +180,16 @@ func findMaxScenic(grid [][]*Cell) int {
 }
 
 func buildGridScores(grid [][]*Cell) {
+	var wg sync.WaitGroup
+
 	for _, row := range grid {
 		for _, cell := range row {
-			calcVisibilityAndScenicForCell(grid, cell)
+			wg.Add(1)
+			calcVisibilityAndScenicForCell(grid, cell, &wg)
 		}
 	}
+
+	wg.Wait()
 }
 
 func parts() {
